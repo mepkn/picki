@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <linearGradient id="picki-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00F0FF" />
+      <stop offset="100%" stop-color="#8B5CF6" />
+    </linearGradient>
+  </defs>
+  <rect width="32" height="32" rx="8" fill="url(#picki-grad)" />
+  <path d="M16 7l2.2 5.3L23.5 14.5l-5.3 2.2L16 22l-2.2-5.3L8.5 14.5l5.3-2.2L16 7z" fill="#06070B" />
+  <path d="M22.5 19.5l1 2.2 2.2 1-2.2 1-1 2.2-1-2.2-2.2-1 2.2-1 1-2.2z" fill="#06070B" />
+</svg>
