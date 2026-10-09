@@ -1,33 +1,71 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-@theme {
+@custom-variant dark (&:is(.dark *));
+
+
+@theme inline {
   --font-sans: "Geist Variable", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-mono: "Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-heading: var(--font-sans);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+}
+
+/* Dark only: picki has one cyber look. */
+:root {
+  --radius: 0.75rem;
+  --background: #06070b;
+  --foreground: #f8fafc;
+  --card: rgb(13 17 26 / 75%);
+  --card-foreground: #f8fafc;
+  --popover: #0d111a;
+  --popover-foreground: #f8fafc;
+  --primary: #00f0ff;
+  --primary-foreground: #020617;
+  --secondary: rgb(15 23 42 / 80%);
+  --secondary-foreground: #e2e8f0;
+  --muted: rgb(30 41 59 / 60%);
+  --muted-foreground: #94a3b8;
+  --accent: rgb(30 41 59 / 70%);
+  --accent-foreground: #f8fafc;
+  --destructive: #fb7185;
+  --border: rgb(0 240 255 / 15%);
+  --input: rgb(51 65 85 / 70%);
+  --ring: #00f0ff;
 }
 
 @layer base {
-  :root {
-    --background: #06070b;
-    --foreground: #f8fafc;
-    --card: rgba(13, 17, 26, 0.7);
-    --border: rgba(0, 240, 255, 0.15);
-    --primary: #00f0ff;
-    --secondary: #8b5cf6;
-    --accent: #ff007a;
-  }
-
-  body {
-    background-color: var(--background);
-    color: var(--foreground);
-    font-family: var(--font-sans);
-    overflow-x: hidden;
-  }
-
-  /* Custom Futuristic Scrollbar */
   * {
+    @apply border-border outline-ring/50;
     scrollbar-width: thin;
     scrollbar-color: rgba(30, 38, 64, 0.8) transparent;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+    overflow-x: hidden;
   }
   ::-webkit-scrollbar {
     width: 6px;
@@ -99,4 +137,23 @@
 
 .animate-pulse-slow {
   animation: pulse-slow 6s ease-in-out infinite;
+}
+
+/* Round progress bars: cyan→violet like the rest of the HUD. */
+.picki-progress [data-slot="progress-track"] {
+  height: 0.375rem;
+  background: rgb(15 23 42);
+  border: 1px solid rgb(30 41 59);
+}
+.picki-progress [data-slot="progress-indicator"] {
+  background: linear-gradient(90deg, #06b6d4, #a855f7);
+}
+
+/* Form labels: small mono caps, as in the original HUD. */
+.field-label {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgb(34 211 238 / 0.9);
 }

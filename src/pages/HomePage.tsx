@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { Zap, Search } from "lucide-react";
 import { Navbar } from "@/components/navigation/Navbar";
-import { CyberButton } from "@/components/ui/CyberButton";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { ListCard } from "@/components/lists/ListCard";
 import { CreateListModal } from "@/components/lists/CreateListModal";
 import { usePicki } from "@/lib/picki-context";
@@ -24,15 +26,10 @@ export function HomePage() {
         <section className="relative px-4 sm:px-6 lg:px-8 pt-8 pb-4 sm:pt-10 sm:pb-6 max-w-4xl mx-auto w-full text-center">
           {/* Primary CTA */}
           <div className="flex justify-center">
-            <CyberButton
-              variant="cyber"
-              size="xl"
-              onClick={() => setShowCreateModal(true)}
-              className="gap-3 w-full sm:w-auto"
-            >
-              <Zap className="w-5 h-5 text-cyan-300" />
-              <span>Create a List</span>
-            </CyberButton>
+            <Button variant="cyber" size="xl" onClick={() => setShowCreateModal(true)} className="w-full sm:w-auto">
+              <Zap />
+              Create a List
+            </Button>
           </div>
         </section>
 
@@ -41,22 +38,24 @@ export function HomePage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-900 pb-4">
             <div className="flex items-center gap-3">
               <h2 className="text-2xl font-bold text-white tracking-tight">Lists</h2>
-              <span className="text-xs font-mono px-2.5 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300">
+              <Badge variant="outline" className="border-cyan-500/30 bg-cyan-500/10 font-mono text-cyan-300">
                 {lists.length}
-              </span>
+              </Badge>
             </div>
 
             {lists.length > 3 && (
-              <div className="relative max-w-xs w-full">
-                <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <input
-                  type="text"
+              <InputGroup className="max-w-xs rounded-xl bg-slate-950/70">
+                <InputGroupAddon>
+                  <Search />
+                </InputGroupAddon>
+                <InputGroupInput
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Filter lists..."
-                  className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-slate-950/70 border border-slate-800 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-cyan-400/70 font-mono"
+                  aria-label="Filter lists"
+                  className="font-mono text-xs"
                 />
-              </div>
+              </InputGroup>
             )}
           </div>
 
@@ -78,7 +77,7 @@ export function HomePage() {
         </section>
       </main>
 
-      {showCreateModal && <CreateListModal onClose={() => setShowCreateModal(false)} />}
+      <CreateListModal open={showCreateModal} onOpenChange={setShowCreateModal} />
     </div>
   );
 }

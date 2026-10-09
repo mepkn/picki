@@ -12,7 +12,7 @@ animated themes (Cyber HUD, Gold Stadium, Crimson Arena) land on a winner.
 
 ## Stack
 
-React 19 · TypeScript · Vite · Tailwind CSS v4 · React Router · Framer Motion · Convex · Vitest.
+React 19 · TypeScript · Vite · Tailwind CSS v4 · shadcn/ui (Base UI) · React Router · Framer Motion · Convex · Vitest.
 
 ## Development
 

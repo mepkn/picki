@@ -21,8 +21,13 @@ import { WinnerModal } from "@/components/selector/WinnerModal";
 import { ListEditorDrawer } from "@/components/list-editor/ListEditorDrawer";
 import { SettingsModal } from "@/components/settings/SettingsModal";
 import { HistoryDrawer } from "@/components/history/HistoryDrawer";
-import { CyberButton } from "@/components/ui/CyberButton";
-import { ModeBadge } from "@/components/ui/Badge";
+import { ConfirmAction } from "@/components/ConfirmAction";
+import { ModeBadge } from "@/components/lists/ModeBadge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Kbd } from "@/components/ui/kbd";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { usePicki } from "@/lib/picki-context";
 import type { ListItem, SelectionResult } from "@/lib/types";
 import { copyToClipboard } from "@/lib/utils";
@@ -91,14 +96,12 @@ export function ListPage() {
 
   const handleDeleteList = async () => {
     if (!list) return;
-    if (window.confirm(`Delete list "${list.name}"? This action cannot be undone.`)) {
-      setIsDeletingList(true);
-      try {
-        await deleteList(list._id);
-        navigate("/");
-      } catch {
-        setIsDeletingList(false);
-      }
+    setIsDeletingList(true);
+    try {
+      await deleteList(list._id);
+      navigate("/");
+    } catch {
+      setIsDeletingList(false);
     }
   };
 
@@ -269,11 +272,9 @@ export function ListPage() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <Link to="/">
-              <CyberButton variant="primary" size="md">
-                Go to Homepage
-              </CyberButton>
-            </Link>
+            <Button render={<Link to="/" />} nativeButton={false}>
+              Go to Homepage
+            </Button>
           </div>
         </main>
       </div>
@@ -290,19 +291,29 @@ export function ListPage() {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             {/* Left: Back & Title */}
             <div className="flex items-start sm:items-center gap-3.5 min-w-0">
-              <Link
-                to="/"
-                className="p-2 rounded-xl bg-slate-900/80 border border-slate-800 text-slate-400 hover:text-white hover:border-cyan-500/40 transition-colors mt-0.5 sm:mt-0 shrink-0"
-                title="Back to home"
-              >
-                <ArrowLeft className="w-4 h-4" />
-              </Link>
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      render={<Link to="/" />}
+                      nativeButton={false}
+                      variant="outline"
+                      size="icon-lg"
+                      aria-label="Back to home"
+                      className="mt-0.5 shrink-0 rounded-xl text-slate-400 hover:border-cyan-500/40 hover:text-white sm:mt-0"
+                    />
+                  }
+                >
+                  <ArrowLeft />
+                </TooltipTrigger>
+                <TooltipContent>Back to home</TooltipContent>
+              </Tooltip>
               <div className="min-w-0">
                 <div className="flex items-center gap-2.5 flex-nowrap group/title min-w-0">
                   {isEditingTitle ? (
                     <form onSubmit={handleSaveTitle} className="inline-flex items-center gap-2 min-w-0">
-                      <input
-                        type="text"
+                      <Input
+                        aria-label="List name"
                         autoFocus
                         value={titleInput}
                         onChange={(e) => setTitleInput(e.target.value)}
@@ -315,32 +326,43 @@ export function ListPage() {
                           }
                         }}
                         style={{ width: `${Math.max(titleInput.length + 1, 3)}ch` }}
-                        className="bg-transparent border-0 border-b-2 border-cyan-400 pb-0.5 text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-normal focus:outline-none focus:ring-0 min-w-0 max-w-[200px] xs:max-w-[280px] sm:max-w-xs md:max-w-md"
+                        className="h-auto min-w-0 max-w-[200px] rounded-none border-0 border-b-2 border-cyan-400 bg-transparent px-0 pb-0.5 text-2xl leading-normal font-extrabold tracking-tight text-white focus-visible:ring-0 dark:bg-transparent sm:max-w-xs sm:text-3xl md:max-w-md"
                       />
-                      <button
+                      <Button
                         type="submit"
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label="Save title"
                         onMouseDown={(e) => e.preventDefault()}
-                        className="p-1.5 rounded-lg text-cyan-400 hover:text-cyan-300 hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
-                        title="Save title"
+                        className="shrink-0 text-cyan-400 hover:text-cyan-300"
                       >
-                        <Check className="w-4 h-4" />
-                      </button>
+                        <Check />
+                      </Button>
                     </form>
                   ) : (
                     <>
                       <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-normal border-b-2 border-transparent pb-0.5 truncate max-w-[220px] xs:max-w-[300px] sm:max-w-sm md:max-w-md">
                         {list.name}
                       </h1>
-                      <button
-                        onClick={() => {
-                          setTitleInput(list.name);
-                          setIsEditingTitle(true);
-                        }}
-                        className="p-1.5 rounded-lg text-slate-500 hover:text-cyan-300 hover:bg-slate-800/80 transition-all opacity-70 group-hover/title:opacity-100 cursor-pointer shrink-0"
-                        title="Rename title"
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </button>
+                      <Tooltip>
+                        <TooltipTrigger
+                          render={
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              aria-label="Rename list"
+                              onClick={() => {
+                                setTitleInput(list.name);
+                                setIsEditingTitle(true);
+                              }}
+                              className="shrink-0 text-slate-500 opacity-70 group-hover/title:opacity-100 hover:text-cyan-300"
+                            />
+                          }
+                        >
+                          <Edit3 />
+                        </TooltipTrigger>
+                        <TooltipContent>Rename list</TooltipContent>
+                      </Tooltip>
                     </>
                   )}
                   <ModeBadge mode={list.selectionMode} className="shrink-0" />
@@ -363,76 +385,75 @@ export function ListPage() {
 
             {/* Right: Actions */}
             <div className="flex items-center gap-2 flex-nowrap overflow-x-auto pb-1 sm:pb-0 shrink-0">
-              {/* Copy URL */}
-              <button
-                onClick={handleShare}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-slate-700/80 text-xs font-mono text-slate-300 hover:text-white transition-all cursor-pointer whitespace-nowrap shrink-0"
-                title="Copy persistent link to clipboard"
-              >
+              <Button variant="outline" onClick={handleShare} className="h-9 shrink-0 rounded-xl font-mono text-xs text-slate-300 hover:text-white">
                 {copiedLink ? (
                   <>
-                    <Check className="w-3.5 h-3.5 text-emerald-400" />
-                    <span className="text-emerald-400 font-semibold whitespace-nowrap">Link Copied!</span>
+                    <Check className="text-emerald-400" />
+                    <span className="font-semibold text-emerald-400">Link Copied!</span>
                   </>
                 ) : (
                   <>
-                    <Share2 className="w-3.5 h-3.5 text-cyan-400" />
-                    <span className="whitespace-nowrap">Share Link</span>
+                    <Share2 className="text-cyan-400" />
+                    Share Link
                   </>
                 )}
-              </button>
-
-              {/* Items Editor Button */}
-              <button
-                onClick={() => setShowEditor(true)}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-slate-700/80 text-xs font-mono text-slate-300 hover:text-white transition-all cursor-pointer whitespace-nowrap shrink-0"
-              >
-                <ListPlus className="w-3.5 h-3.5 text-cyan-400" />
-                <span className="whitespace-nowrap">Edit Items ({items.length})</span>
-              </button>
-
-              {/* History Drawer Button */}
-              <button
-                onClick={() => setShowHistory(true)}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-slate-700/80 text-xs font-mono text-slate-300 hover:text-white transition-all cursor-pointer whitespace-nowrap shrink-0"
-              >
-                <History className="w-3.5 h-3.5 text-purple-400" />
-                <span className="whitespace-nowrap">History ({selections.length})</span>
-              </button>
-
-              {/* Settings Button */}
-              <button
-                onClick={() => setShowSettings(true)}
-                className="p-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-slate-700/80 text-slate-400 hover:text-white transition-all cursor-pointer shrink-0"
-                title="List Settings"
-              >
-                <Settings className="w-4 h-4" />
-              </button>
-
-              {/* Delete List Button */}
-              <button
-                onClick={handleDeleteList}
-                disabled={isDeletingList}
-                className="p-2 rounded-xl bg-slate-900/80 hover:bg-rose-500/10 border border-slate-700/80 hover:border-rose-500/40 text-slate-400 hover:text-rose-400 transition-all cursor-pointer disabled:opacity-50 shrink-0"
-                title="Delete list"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
+              </Button>
+              <Button variant="outline" onClick={() => setShowEditor(true)} className="h-9 shrink-0 rounded-xl font-mono text-xs text-slate-300 hover:text-white">
+                <ListPlus className="text-cyan-400" />
+                Edit Items ({items.length})
+              </Button>
+              <Button variant="outline" onClick={() => setShowHistory(true)} className="h-9 shrink-0 rounded-xl font-mono text-xs text-slate-300 hover:text-white">
+                <History className="text-purple-400" />
+                History ({selections.length})
+              </Button>
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      variant="outline"
+                      size="icon-lg"
+                      aria-label="List settings"
+                      onClick={() => setShowSettings(true)}
+                      className="shrink-0 rounded-xl text-slate-400 hover:text-white"
+                    />
+                  }
+                >
+                  <Settings />
+                </TooltipTrigger>
+                <TooltipContent>List settings</TooltipContent>
+              </Tooltip>
+              <ConfirmAction
+                trigger={
+                  <Button
+                    variant="outline"
+                    size="icon-lg"
+                    aria-label="Delete list"
+                    disabled={isDeletingList}
+                    className="shrink-0 rounded-xl text-slate-400 hover:border-rose-500/40 hover:bg-rose-500/10 hover:text-rose-400"
+                  >
+                    <Trash2 />
+                  </Button>
+                }
+                title={`Delete "${list.name}"?`}
+                description="The list, its items and its history are deleted. This can't be undone."
+                confirmLabel="Delete List"
+                onConfirm={handleDeleteList}
+              />
             </div>
           </div>
         </div>
 
         {/* Notices */}
         {autoRestartNotice && (
-          <div className="mb-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-mono text-center animate-in fade-in">
-            {autoRestartNotice}
-          </div>
+          <Alert className="mb-4 border-emerald-500/30 bg-emerald-500/10 animate-in fade-in">
+            <AlertDescription className="text-center font-mono text-xs text-emerald-300">{autoRestartNotice}</AlertDescription>
+          </Alert>
         )}
 
         {errorMessage && (
-          <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-mono text-center animate-in fade-in">
-            {errorMessage}
-          </div>
+          <Alert variant="destructive" className="mb-4 border-rose-500/30 bg-rose-500/10 animate-in fade-in">
+            <AlertDescription className="text-center font-mono text-xs text-rose-300">{errorMessage}</AlertDescription>
+          </Alert>
         )}
 
         {/* Central Selector Visual Chamber */}
@@ -454,29 +475,18 @@ export function ListPage() {
                 <div className="p-3.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 font-mono text-xs font-bold uppercase tracking-wider">
                   ★ Round {list.currentRound} Complete! All items selected.
                 </div>
-                <CyberButton
-                  variant="cyber"
-                  size="xl"
-                  onClick={() => startNewRound(list._id)}
-                  className="w-full gap-2.5"
-                >
-                  <RotateCcw className="w-5 h-5" />
-                  <span>Start Round {(list.currentRound || 1) + 1}</span>
-                </CyberButton>
+                <Button variant="cyber" size="xl" onClick={() => startNewRound(list._id)} className="w-full">
+                  <RotateCcw />
+                  Start Round {(list.currentRound || 1) + 1}
+                </Button>
               </div>
             ) : (
-              <CyberButton
-                variant={
-                  effectiveTheme === "gold_stadium"
-                    ? "cyber"
-                    : effectiveTheme === "crimson_arena"
-                    ? "primary"
-                    : "cyber"
-                }
+              <Button
+                variant={effectiveTheme === "crimson_arena" ? "default" : "cyber"}
                 size="xl"
                 onClick={handleSelect}
                 disabled={isSelecting || items.length === 0}
-                className={`w-full gap-2.5 text-xl tracking-widest py-5 ${
+                className={`h-16 w-full text-xl tracking-widest ${
                   effectiveTheme === "gold_stadium"
                     ? "bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 text-black font-black border-amber-300 shadow-[0_0_25px_rgba(245,158,11,0.5)]"
                     : effectiveTheme === "crimson_arena"
@@ -494,11 +504,11 @@ export function ListPage() {
                   }`}
                 />
                 <span>{isSelecting ? "SELECTING..." : "SELECT"}</span>
-              </CyberButton>
+              </Button>
             )}
 
             <div className="text-[11px] font-mono text-slate-500 text-center">
-              Press <kbd className="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700 text-slate-400">Space</kbd> or click to select
+              Press <Kbd>Space</Kbd> or click to select
             </div>
           </div>
         </div>
@@ -521,26 +531,17 @@ export function ListPage() {
         />
       )}
 
-      {showEditor && (
-        <ListEditorDrawer
-          listId={list._id}
-          items={items}
-          onClose={() => setShowEditor(false)}
-        />
-      )}
+      <ListEditorDrawer listId={list._id} items={items} open={showEditor} onOpenChange={setShowEditor} />
 
-      {showSettings && (
-        <SettingsModal list={list} onClose={() => setShowSettings(false)} />
-      )}
+      <SettingsModal list={list} open={showSettings} onOpenChange={setShowSettings} />
 
-      {showHistory && (
-        <HistoryDrawer
-          listId={list._id}
-          listName={list.name}
-          selections={selections}
-          onClose={() => setShowHistory(false)}
-        />
-      )}
+      <HistoryDrawer
+        listId={list._id}
+        listName={list.name}
+        selections={selections}
+        open={showHistory}
+        onOpenChange={setShowHistory}
+      />
     </div>
   );
 }

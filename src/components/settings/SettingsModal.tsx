@@ -1,25 +1,66 @@
-import React, { useState } from "react";
-import { X, Sliders, ShieldCheck, Repeat, RefreshCw, Volume2, VolumeX, Trash2, RotateCcw, Trophy, Flame, Cpu, Dices } from "lucide-react";
-import type { ListDoc, SelectionMode, AnimationTheme } from "@/lib/types";
-import { CyberButton } from "../ui/CyberButton";
+import { useState } from "react";
+import { Cpu, Dices, Flame, RotateCcw, Sliders, Trash2, Trophy, Volume2, VolumeX } from "lucide-react";
+import { ConfirmAction } from "@/components/ConfirmAction";
+import { ModePicker } from "@/components/lists/ModePicker";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Field, FieldContent, FieldDescription, FieldLabel, FieldLegend, FieldSet } from "@/components/ui/field";
+import { Slider } from "@/components/ui/slider";
+import { Spinner } from "@/components/ui/spinner";
+import { Switch } from "@/components/ui/switch";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { usePicki } from "@/lib/picki-context";
 import { sound } from "@/lib/sound";
+import type { AnimationTheme, ListDoc, SelectionMode } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 interface SettingsModalProps {
   list: ListDoc;
-  onClose: () => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
-export const SettingsModal: React.FC<SettingsModalProps> = ({ list, onClose }) => {
+const THEMES = [
+  { value: "cyber_hud", label: "Cyber", hint: "Default", icon: Cpu, color: "text-purple-400", active: "data-[pressed]:border-purple-400 data-[pressed]:bg-purple-500/15 data-[pressed]:text-purple-200 data-[pressed]:shadow-[0_0_15px_rgba(139,92,246,0.25)]" },
+  { value: "gold_stadium", label: "Gold", hint: "Flares & Lights", icon: Trophy, color: "text-amber-400", active: "data-[pressed]:border-amber-400 data-[pressed]:bg-amber-500/15 data-[pressed]:text-amber-200 data-[pressed]:shadow-[0_0_15px_rgba(245,158,11,0.25)]" },
+  { value: "crimson_arena", label: "Crimson", hint: "Steam & Siren", icon: Flame, color: "text-rose-400", active: "data-[pressed]:border-rose-400 data-[pressed]:bg-rose-500/15 data-[pressed]:text-rose-200 data-[pressed]:shadow-[0_0_15px_rgba(244,63,94,0.25)]" },
+  { value: "random", label: "Random", hint: "Shuffle", icon: Dices, color: "text-cyan-400", active: "data-[pressed]:border-cyan-400 data-[pressed]:bg-cyan-500/15 data-[pressed]:text-cyan-200 data-[pressed]:shadow-[0_0_15px_rgba(0,240,255,0.25)]" },
+] as const;
+
+// Older lists may still store the legacy theme names.
+function normalizeTheme(theme: AnimationTheme | undefined): AnimationTheme {
+  if (theme === "fifa_walkout") return "gold_stadium";
+  if (theme === "wwe_rumble") return "crimson_arena";
+  return theme || "cyber_hud";
+}
+
+export function SettingsModal({ list, open, onOpenChange }: SettingsModalProps) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="cyber-glass-glow flex max-h-[90vh] flex-col gap-0 overflow-hidden rounded-3xl border-cyan-500/30 p-0 sm:max-w-lg">
+        {/* Remount on open so unsaved changes are dropped when reopened. */}
+        {open && <SettingsForm list={list} onClose={() => onOpenChange(false)} />}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function SettingsForm({ list, onClose }: { list: ListDoc; onClose: () => void }) {
   const { updateList, clearSelections, startNewRound } = usePicki();
 
   const [mode, setMode] = useState<SelectionMode>(list.selectionMode);
-  const [theme, setTheme] = useState<AnimationTheme>(list.animationTheme || "cyber_hud");
+  const [theme, setTheme] = useState<AnimationTheme>(normalizeTheme(list.animationTheme));
   const [duration, setDuration] = useState<number>(list.animationDuration || 2.5);
   const [reducedMotion, setReducedMotion] = useState<boolean>(list.reducedMotion || false);
   const [isMuted, setIsMuted] = useState<boolean>(sound.getMuted());
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [message, setMessage] = useState<string | null>(null);
+
+  const flash = (text: string) => {
+    setMessage(text);
+    setTimeout(() => setMessage(null), 3000);
+  };
 
   const handleSave = async () => {
     try {
@@ -39,290 +80,133 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ list, onClose }) =
   };
 
   const handleClearHistory = async () => {
-    if (window.confirm("Clear all selection history for this list? Your items and round status will not be lost.")) {
-      await clearSelections(list._id);
-      setMessage("Selection history cleared.");
-      setTimeout(() => setMessage(null), 3000);
-    }
+    await clearSelections(list._id);
+    flash("Selection history cleared.");
   };
 
   const handleStartNewRound = async () => {
     const res = await startNewRound(list._id);
-    setMessage(`Round ${res.newRound} initiated! All items are eligible.`);
-    setTimeout(() => setMessage(null), 3000);
+    flash(`Round ${res.newRound} initiated! All items are eligible.`);
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="cyber-glass-glow rounded-3xl max-w-lg w-full relative border border-cyan-500/30 max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
-        {/* Header (Pinned) */}
-        <div className="flex items-center justify-between border-b border-slate-800/80 px-6 sm:px-8 py-5 shrink-0 bg-slate-950/40">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center border border-cyan-500/30">
-              <Sliders className="w-4 h-4" />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-white tracking-wide">List Settings</h2>
-              <p className="text-xs text-slate-400 font-mono">{list.name}</p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800/60 transition-colors cursor-pointer"
-          >
-            <X className="w-5 h-5" />
-          </button>
+    <>
+      <DialogHeader className="shrink-0 flex-row items-center gap-2.5 border-b border-slate-800/80 bg-slate-950/40 px-6 py-5 sm:px-8">
+        <div className="flex size-8 items-center justify-center rounded-lg border border-cyan-500/30 bg-cyan-500/20 text-cyan-400">
+          <Sliders className="size-4" />
         </div>
-
-        {/* Scrollable Body */}
-        <div className="flex-1 overflow-y-auto px-6 sm:px-8 py-6 space-y-6">
-          {message && (
-            <div className="p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs font-mono">
-              {message}
-            </div>
-          )}
-
-          {/* Section 1: Selection Mode */}
-        <div className="space-y-3">
-          <label className="text-xs font-mono uppercase tracking-wider text-cyan-400/90 font-medium">
-            Selection Behavior
-          </label>
-          <div className="space-y-2">
-            <button
-              type="button"
-              onClick={() => setMode("no_repetition")}
-              className={`w-full p-3.5 rounded-xl text-left border transition-all ${
-                mode === "no_repetition"
-                  ? "bg-cyan-500/15 border-cyan-400/60 shadow-[0_0_15px_rgba(0,240,255,0.15)] text-white"
-                  : "bg-slate-950/50 border-slate-800 text-slate-400 hover:border-slate-700"
-              }`}
-            >
-              <div className="flex items-center justify-between font-medium text-xs text-cyan-300 mb-1">
-                <span className="flex items-center gap-1.5 font-bold">
-                  <ShieldCheck className="w-4 h-4" />
-                  No Repetition (Default)
-                </span>
-                {mode === "no_repetition" && <span className="text-[10px] uppercase font-mono tracking-widest text-cyan-400">Active</span>}
-              </div>
-              <p className="text-xs text-slate-300">
-                Each item is selected once before you start another round.
-              </p>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setMode("allow_repetition")}
-              className={`w-full p-3.5 rounded-xl text-left border transition-all ${
-                mode === "allow_repetition"
-                  ? "bg-purple-500/15 border-purple-400/60 shadow-[0_0_15px_rgba(139,92,246,0.15)] text-white"
-                  : "bg-slate-950/50 border-slate-800 text-slate-400 hover:border-slate-700"
-              }`}
-            >
-              <div className="flex items-center justify-between font-medium text-xs text-purple-300 mb-1">
-                <span className="flex items-center gap-1.5 font-bold">
-                  <Repeat className="w-4 h-4" />
-                  Allow Repetition
-                </span>
-                {mode === "allow_repetition" && <span className="text-[10px] uppercase font-mono tracking-widest text-purple-400">Active</span>}
-              </div>
-              <p className="text-xs text-slate-300">
-                An item can be selected again immediately.
-              </p>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setMode("auto_restart")}
-              className={`w-full p-3.5 rounded-xl text-left border transition-all ${
-                mode === "auto_restart"
-                  ? "bg-emerald-500/15 border-emerald-400/60 shadow-[0_0_15px_rgba(16,185,129,0.15)] text-white"
-                  : "bg-slate-950/50 border-slate-800 text-slate-400 hover:border-slate-700"
-              }`}
-            >
-              <div className="flex items-center justify-between font-medium text-xs text-emerald-300 mb-1">
-                <span className="flex items-center gap-1.5 font-bold">
-                  <RefreshCw className="w-4 h-4" />
-                  Auto-Restart Round
-                </span>
-                {mode === "auto_restart" && <span className="text-[10px] uppercase font-mono tracking-widest text-emerald-400">Active</span>}
-              </div>
-              <p className="text-xs text-slate-300">
-                Automatically start a new round when every item has been selected.
-              </p>
-            </button>
-          </div>
+        <div>
+          <DialogTitle className="text-xl font-bold tracking-wide text-white">List Settings</DialogTitle>
+          <DialogDescription className="font-mono text-xs">{list.name}</DialogDescription>
         </div>
+      </DialogHeader>
 
-        {/* Section 2: Animation & Audio */}
-        <div className="space-y-4 pt-2 border-t border-slate-800">
-          <label className="text-xs font-mono uppercase tracking-wider text-cyan-400/90 font-medium">
-            Visual & Audio
-          </label>
+      <div className="flex-1 space-y-6 overflow-y-auto px-6 py-6 sm:px-8">
+        {message && (
+          <Alert className="border-cyan-500/30 bg-cyan-500/10">
+            <AlertDescription className="font-mono text-xs text-cyan-300">{message}</AlertDescription>
+          </Alert>
+        )}
 
-          {/* Animation Theme Preset */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs font-mono">
-              <span className="text-slate-300">Animation Style</span>
-              <span className="text-cyan-400 font-bold">
-                {theme === "random"
-                  ? "Random (Per Round)"
-                  : theme === "gold_stadium" || theme === "fifa_walkout"
-                  ? "Gold"
-                  : theme === "crimson_arena" || theme === "wwe_rumble"
-                  ? "Crimson"
-                  : "Cyber"}
-              </span>
+        <FieldSet>
+          <FieldLegend className="field-label">Selection Behavior</FieldLegend>
+          <ModePicker value={mode} onChange={setMode} orientation="vertical" />
+        </FieldSet>
+
+        <FieldSet className="border-t border-slate-800 pt-4">
+          <FieldLegend className="field-label">Visual & Audio</FieldLegend>
+
+          <Field>
+            <FieldLabel className="text-xs text-slate-300">Animation Style</FieldLabel>
+            <ToggleGroup
+              aria-label="Animation style"
+              value={[theme]}
+              onValueChange={(next) => next[0] && setTheme(next[0] as AnimationTheme)}
+              className="grid w-full grid-cols-2 gap-2 sm:grid-cols-4"
+            >
+              {THEMES.map((t) => (
+                <ToggleGroupItem
+                  key={t.value}
+                  value={t.value}
+                  variant="outline"
+                  className={cn(
+                    "h-auto w-full flex-col gap-1.5 rounded-xl border-slate-800 bg-slate-950/60 p-2.5 text-slate-400 hover:border-slate-700 hover:bg-slate-950/80",
+                    t.active,
+                  )}
+                >
+                  <t.icon className={cn("size-4", t.color)} />
+                  <span className="font-mono text-[11px] font-bold">{t.label}</span>
+                  <span className="text-[9px] font-normal text-slate-500">{t.hint}</span>
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
+          </Field>
+
+          <Field>
+            <div className="flex items-center justify-between font-mono text-xs">
+              <FieldLabel htmlFor="spin-duration" className="text-slate-300">Spin Duration</FieldLabel>
+              <span className="font-bold text-cyan-300">{duration}s</span>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              <button
-                type="button"
-                onClick={() => setTheme("cyber_hud")}
-                className={`p-2.5 rounded-xl border text-center transition-all flex flex-col items-center gap-1.5 ${
-                  theme === "cyber_hud"
-                    ? "bg-purple-500/15 border-purple-400 text-purple-200 shadow-[0_0_15px_rgba(139,92,246,0.25)]"
-                    : "bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700"
-                }`}
-              >
-                <Cpu className="w-4 h-4 text-purple-400" />
-                <span className="text-[11px] font-mono font-bold">Cyber</span>
-                <span className="text-[9px] text-slate-500 font-sans">Default</span>
-              </button>
+            <Slider
+              id="spin-duration"
+              min={1}
+              max={5}
+              step={0.5}
+              value={[duration]}
+              onValueChange={(v) => setDuration(Array.isArray(v) ? v[0] : v)}
+            />
+          </Field>
 
-              <button
-                type="button"
-                onClick={() => setTheme("gold_stadium")}
-                className={`p-2.5 rounded-xl border text-center transition-all flex flex-col items-center gap-1.5 ${
-                  theme === "gold_stadium" || theme === "fifa_walkout"
-                    ? "bg-amber-500/15 border-amber-400 text-amber-200 shadow-[0_0_15px_rgba(245,158,11,0.25)]"
-                    : "bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700"
-                }`}
-              >
-                <Trophy className="w-4 h-4 text-amber-400" />
-                <span className="text-[11px] font-mono font-bold">Gold</span>
-                <span className="text-[9px] text-slate-500 font-sans">Flares & Lights</span>
-              </button>
+          <Field orientation="horizontal" className="rounded-xl border border-slate-800/80 bg-slate-950/60 p-3">
+            <FieldContent>
+              <FieldLabel htmlFor="reduced-motion" className="text-sm text-slate-200">Reduced Motion</FieldLabel>
+              <FieldDescription className="text-xs">Faster, simplified transition with minimal movement</FieldDescription>
+            </FieldContent>
+            <Switch id="reduced-motion" checked={reducedMotion} onCheckedChange={setReducedMotion} />
+          </Field>
 
-              <button
-                type="button"
-                onClick={() => setTheme("crimson_arena")}
-                className={`p-2.5 rounded-xl border text-center transition-all flex flex-col items-center gap-1.5 ${
-                  theme === "crimson_arena" || theme === "wwe_rumble"
-                    ? "bg-rose-500/15 border-rose-400 text-rose-200 shadow-[0_0_15px_rgba(244,63,94,0.25)]"
-                    : "bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700"
-                }`}
-              >
-                <Flame className="w-4 h-4 text-rose-400" />
-                <span className="text-[11px] font-mono font-bold">Crimson</span>
-                <span className="text-[9px] text-slate-500 font-sans">Steam & Siren</span>
-              </button>
+          <Field orientation="horizontal" className="rounded-xl border border-slate-800/80 bg-slate-950/60 p-3">
+            {isMuted ? <VolumeX className="size-4 shrink-0 text-slate-500" /> : <Volume2 className="size-4 shrink-0 text-cyan-400" />}
+            <FieldContent>
+              <FieldLabel htmlFor="sound-effects" className="text-sm text-slate-200">Sound Effects</FieldLabel>
+              <FieldDescription className="text-xs">Futuristic ticker and celebration chimes</FieldDescription>
+            </FieldContent>
+            <Switch id="sound-effects" checked={!isMuted} onCheckedChange={(on) => setIsMuted(!on)} />
+          </Field>
+        </FieldSet>
 
-              <button
-                type="button"
-                onClick={() => setTheme("random")}
-                className={`p-2.5 rounded-xl border text-center transition-all flex flex-col items-center gap-1.5 ${
-                  theme === "random"
-                    ? "bg-cyan-500/15 border-cyan-400 text-cyan-200 shadow-[0_0_15px_rgba(0,240,255,0.25)]"
-                    : "bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700"
-                }`}
-              >
-                <Dices className="w-4 h-4 text-cyan-400" />
-                <span className="text-[11px] font-mono font-bold">Random</span>
-                <span className="text-[9px] text-slate-500 font-sans">Shuffle</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Animation Duration */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs font-mono">
-              <span className="text-slate-300">Spin Duration</span>
-              <span className="text-cyan-300 font-bold">{duration}s</span>
-            </div>
-            <input
-              type="range"
-              min="1"
-              max="5"
-              step="0.5"
-              value={duration}
-              onChange={(e) => setDuration(parseFloat(e.target.value))}
-              className="w-full accent-cyan-400 bg-slate-800 h-1.5 rounded-lg cursor-pointer"
+        <FieldSet className="border-t border-slate-800 pt-4">
+          <FieldLegend className="field-label">Rounds & History</FieldLegend>
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+            <Button variant="outline" onClick={handleStartNewRound} className="h-10 rounded-xl font-mono text-xs text-cyan-300 hover:border-cyan-500/40">
+              <RotateCcw />
+              Start New Round
+            </Button>
+            <ConfirmAction
+              trigger={
+                <Button variant="outline" className="h-10 rounded-xl font-mono text-xs text-rose-300 hover:border-rose-500/40">
+                  <Trash2 />
+                  Clear History
+                </Button>
+              }
+              title="Clear selection history?"
+              description="All picks for this list are removed. Your items and round status are kept."
+              confirmLabel="Clear History"
+              onConfirm={handleClearHistory}
             />
           </div>
-
-          {/* Reduced Motion Switch */}
-          <div className="flex items-center justify-between p-3 rounded-xl bg-slate-950/60 border border-slate-800/80">
-            <div>
-              <div className="text-sm font-medium text-slate-200">Reduced Motion</div>
-              <div className="text-xs text-slate-400">Faster, simplified transition with minimal movement</div>
-            </div>
-            <input
-              type="checkbox"
-              checked={reducedMotion}
-              onChange={(e) => setReducedMotion(e.target.checked)}
-              className="w-4 h-4 accent-cyan-400 cursor-pointer"
-            />
-          </div>
-
-          {/* Sound Toggle */}
-          <div className="flex items-center justify-between p-3 rounded-xl bg-slate-950/60 border border-slate-800/80">
-            <div className="flex items-center gap-2.5">
-              {isMuted ? <VolumeX className="w-4 h-4 text-slate-500" /> : <Volume2 className="w-4 h-4 text-cyan-400" />}
-              <div>
-                <div className="text-sm font-medium text-slate-200">Sound Effects</div>
-                <div className="text-xs text-slate-400">Futuristic ticker and celebration chimes</div>
-              </div>
-            </div>
-            <input
-              type="checkbox"
-              checked={!isMuted}
-              onChange={(e) => setIsMuted(!e.target.checked)}
-              className="w-4 h-4 accent-cyan-400 cursor-pointer"
-            />
-          </div>
-        </div>
-
-        {/* Section 3: Rounds & History Management */}
-        <div className="space-y-3 pt-2 border-t border-slate-800">
-          <label className="text-xs font-mono uppercase tracking-wider text-cyan-400/90 font-medium">
-            Rounds & History
-          </label>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            <button
-              type="button"
-              onClick={handleStartNewRound}
-              className="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-slate-900 border border-slate-700 hover:border-cyan-500/40 text-xs font-mono text-cyan-300 transition-colors"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>Start New Round</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleClearHistory}
-              className="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-slate-900 border border-slate-700 hover:border-rose-500/40 text-xs font-mono text-rose-300 transition-colors"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              <span>Clear History</span>
-            </button>
-          </div>
-        </div>
-
-        </div>
-
-        {/* Footer Action Buttons (Pinned) */}
-        <div className="flex items-center justify-end gap-3 px-6 sm:px-8 py-4 border-t border-slate-800/80 bg-slate-950/60 shrink-0">
-          <CyberButton variant="ghost" size="md" onClick={onClose}>
-            Cancel
-          </CyberButton>
-          <CyberButton
-            variant="primary"
-            size="md"
-            onClick={handleSave}
-            isLoading={isSaving}
-          >
-            Save Settings
-          </CyberButton>
-        </div>
+        </FieldSet>
       </div>
-    </div>
+
+      <DialogFooter className="m-0 shrink-0 rounded-b-3xl border-slate-800/80 bg-slate-950/60 px-6 py-4 sm:px-8">
+        <Button variant="ghost" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button onClick={handleSave} disabled={isSaving}>
+          {isSaving && <Spinner />}
+          Save Settings
+        </Button>
+      </DialogFooter>
+    </>
   );
-};
+}

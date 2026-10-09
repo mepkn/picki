@@ -1,20 +1,34 @@
 import React, { useState } from "react";
-import { X, Plus, ClipboardPaste, Trash2, Edit2, Check, AlertCircle } from "lucide-react";
-import type { ListItem } from "@/lib/types";
-import { CyberButton } from "../ui/CyberButton";
+import { AlertCircle, Check, ClipboardPaste, Edit2, Plus, Trash2 } from "lucide-react";
+import { ConfirmAction } from "@/components/ConfirmAction";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Textarea } from "@/components/ui/textarea";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { usePicki } from "@/lib/picki-context";
+import type { ListItem } from "@/lib/types";
 
 interface ListEditorDrawerProps {
   listId: string;
   items: ListItem[];
-  onClose: () => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
-export const ListEditorDrawer: React.FC<ListEditorDrawerProps> = ({
-  listId,
-  items,
-  onClose,
-}) => {
+function IconAction({ label, onClick, className, children }: { label: string; onClick: () => void; className?: string; children: React.ReactNode }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger render={<Button variant="ghost" size="icon-sm" aria-label={label} onClick={onClick} className={className} />}>
+        {children}
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+export function ListEditorDrawer({ listId, items, open, onOpenChange }: ListEditorDrawerProps) {
   const { addItem, addItemsBulk, updateItem, deleteItem, clearItems } = usePicki();
 
   const [newItemValue, setNewItemValue] = useState("");
@@ -27,7 +41,6 @@ export const ListEditorDrawer: React.FC<ListEditorDrawerProps> = ({
   const handleAddSingle = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newItemValue.trim()) return;
-
     try {
       setIsSubmitting(true);
       await addItem(listId, newItemValue.trim());
@@ -39,14 +52,12 @@ export const ListEditorDrawer: React.FC<ListEditorDrawerProps> = ({
 
   const handleBulkAdd = async () => {
     if (!bulkText.trim()) return;
-
     try {
       setIsSubmitting(true);
       const lines = bulkText
         .split("\n")
         .map((s) => s.trim())
         .filter((s) => s.length > 0);
-
       await addItemsBulk(listId, lines);
       setBulkText("");
       setShowBulkPaste(false);
@@ -66,157 +77,104 @@ export const ListEditorDrawer: React.FC<ListEditorDrawerProps> = ({
     setEditingItemId(null);
   };
 
-  const handleClearAll = async () => {
-    if (window.confirm("Remove all items from this list?")) {
-      await clearItems(listId);
-    }
-  };
-
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="w-full max-w-md h-full bg-[#0a0d14] border-l border-cyan-500/20 p-6 flex flex-col justify-between shadow-[-10px_0_40px_rgba(0,0,0,0.8)] overflow-hidden">
-        {/* Top Header */}
-        <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-          <div>
-            <h3 className="text-lg font-bold text-white tracking-wide">Manage List Items</h3>
-            <p className="text-xs text-slate-400 font-mono">
-              {items.length} {items.length === 1 ? "entry" : "entries"} total
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800/60 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="w-full gap-0 border-l border-cyan-500/20 bg-[#0a0d14] shadow-[-10px_0_40px_rgba(0,0,0,0.8)] sm:max-w-md">
+        <SheetHeader className="border-b border-slate-800 p-6 pb-4">
+          <SheetTitle className="text-lg font-bold tracking-wide text-white">Manage List Items</SheetTitle>
+          <SheetDescription className="font-mono text-xs">
+            {items.length} {items.length === 1 ? "entry" : "entries"} total
+          </SheetDescription>
+        </SheetHeader>
 
-        {/* Content Area */}
-        <div className="flex-1 overflow-y-auto py-4 space-y-4 pr-1">
-          {/* Add Item Input */}
+        <div className="flex-1 space-y-4 overflow-y-auto px-6 py-4">
           <form onSubmit={handleAddSingle} className="flex gap-2">
-            <input
-              type="text"
+            <Input
               placeholder="Add item..."
+              aria-label="New item"
               value={newItemValue}
               onChange={(e) => setNewItemValue(e.target.value)}
-              className="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-cyan-400/70"
+              className="h-10 flex-1 rounded-xl"
             />
-            <CyberButton
-              type="submit"
-              variant="primary"
-              size="sm"
-              disabled={!newItemValue.trim() || isSubmitting}
-            >
-              <Plus className="w-4 h-4" />
-            </CyberButton>
+            <Button type="submit" size="icon-lg" aria-label="Add item" disabled={!newItemValue.trim() || isSubmitting} className="size-10 rounded-xl">
+              <Plus />
+            </Button>
           </form>
 
-          {/* Bulk Paste Toggle */}
           <div>
-            <button
-              onClick={() => setShowBulkPaste(!showBulkPaste)}
-              className="text-xs text-cyan-400 hover:text-cyan-300 font-mono inline-flex items-center gap-1.5 transition-colors cursor-pointer"
-            >
-              <ClipboardPaste className="w-3.5 h-3.5" />
-              <span>{showBulkPaste ? "Hide Bulk Paste" : "Paste Multiple Items"}</span>
-            </button>
+            <Button variant="link" size="sm" onClick={() => setShowBulkPaste(!showBulkPaste)} className="h-auto px-0 font-mono text-xs">
+              <ClipboardPaste />
+              {showBulkPaste ? "Hide Bulk Paste" : "Paste Multiple Items"}
+            </Button>
 
             {showBulkPaste && (
-              <div className="mt-2.5 p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2">
-                <textarea
+              <div className="mt-2.5 space-y-2 rounded-xl border border-slate-800 bg-slate-950/80 p-3">
+                <Textarea
                   rows={4}
                   value={bulkText}
                   onChange={(e) => setBulkText(e.target.value)}
-                  placeholder="Paste lines here...&#10;Alice&#10;Bob&#10;Charlie"
-                  className="w-full p-2.5 text-xs font-mono bg-slate-900 border border-slate-800 rounded-lg text-white placeholder-slate-600 focus:outline-none focus:border-cyan-400/60"
+                  placeholder={"Paste lines here...\nAlice\nBob\nCharlie"}
+                  aria-label="Items, one per line"
+                  className="font-mono text-xs"
                 />
                 <div className="flex justify-end gap-2">
-                  <CyberButton
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowBulkPaste(false)}
-                  >
+                  <Button variant="ghost" size="sm" onClick={() => setShowBulkPaste(false)}>
                     Cancel
-                  </CyberButton>
-                  <CyberButton
-                    variant="primary"
-                    size="sm"
-                    onClick={handleBulkAdd}
-                    disabled={!bulkText.trim() || isSubmitting}
-                  >
+                  </Button>
+                  <Button size="sm" onClick={handleBulkAdd} disabled={!bulkText.trim() || isSubmitting}>
                     Add All Lines
-                  </CyberButton>
+                  </Button>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Duplicate notice */}
-          <div className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-900/60 border border-slate-800/80 text-[11px] text-slate-400 font-mono">
-            <AlertCircle className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-            <span>Duplicate values are permitted and treated as distinct entries.</span>
-          </div>
+          <Alert className="border-slate-800/80 bg-slate-900/60 py-2.5">
+            <AlertCircle className="text-cyan-400" />
+            <AlertDescription className="font-mono text-[11px]">
+              Duplicate values are permitted and treated as distinct entries.
+            </AlertDescription>
+          </Alert>
 
-          {/* Items List */}
           <div className="space-y-1.5">
             {items.length === 0 ? (
-              <div className="text-center py-12 text-slate-500 text-xs font-mono">
-                No items added yet.
-              </div>
+              <div className="py-12 text-center font-mono text-xs text-slate-500">No items added yet.</div>
             ) : (
               items.map((item, index) => (
                 <div
                   key={item._id}
-                  className="group flex items-center justify-between p-2.5 rounded-xl bg-slate-900/40 hover:bg-slate-900/80 border border-slate-800/60 hover:border-cyan-500/30 transition-all text-sm"
+                  className="group flex items-center justify-between rounded-xl border border-slate-800/60 bg-slate-900/40 p-2.5 text-sm transition-all hover:border-cyan-500/30 hover:bg-slate-900/80"
                 >
-                  <div className="flex items-center gap-2.5 flex-1 min-w-0 mr-2">
-                    <span className="text-[11px] font-mono text-slate-500 w-5 shrink-0 text-right">
-                      {index + 1}.
-                    </span>
-
+                  <div className="mr-2 flex min-w-0 flex-1 items-center gap-2.5">
+                    <span className="w-5 shrink-0 text-right font-mono text-[11px] text-slate-500">{index + 1}.</span>
                     {editingItemId === item._id ? (
-                      <div className="flex items-center gap-1.5 flex-1">
-                        <input
-                          type="text"
+                      <div className="flex flex-1 items-center gap-1.5">
+                        <Input
                           autoFocus
+                          aria-label="Item value"
                           value={editingText}
                           onChange={(e) => setEditingText(e.target.value)}
                           onKeyDown={(e) => {
                             if (e.key === "Enter") saveEdit(item._id);
                             if (e.key === "Escape") setEditingItemId(null);
                           }}
-                          className="flex-1 px-2 py-1 text-xs bg-slate-950 border border-cyan-400 rounded text-white focus:outline-none"
+                          className="h-7 flex-1 border-cyan-400 text-xs"
                         />
-                        <button
-                          onClick={() => saveEdit(item._id)}
-                          className="p-1 text-emerald-400 hover:text-emerald-300"
-                        >
-                          <Check className="w-3.5 h-3.5" />
-                        </button>
+                        <IconAction label="Save item" onClick={() => saveEdit(item._id)} className="text-emerald-400 hover:text-emerald-300">
+                          <Check />
+                        </IconAction>
                       </div>
                     ) : (
-                      <span className="text-slate-200 truncate font-medium">
-                        {item.value}
-                      </span>
+                      <span className="truncate font-medium text-slate-200">{item.value}</span>
                     )}
                   </div>
-
-                  <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
-                    <button
-                      onClick={() => startEdit(item)}
-                      className="p-1.5 text-slate-400 hover:text-cyan-300 rounded hover:bg-slate-800 transition-colors"
-                      title="Edit item"
-                    >
-                      <Edit2 className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={() => deleteItem(item._id)}
-                      className="p-1.5 text-slate-400 hover:text-rose-400 rounded hover:bg-rose-500/10 transition-colors"
-                      title="Delete item"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                  <div className="flex items-center gap-1 opacity-80 transition-opacity group-hover:opacity-100">
+                    <IconAction label="Edit item" onClick={() => startEdit(item)} className="text-slate-400 hover:text-cyan-300">
+                      <Edit2 />
+                    </IconAction>
+                    <IconAction label="Delete item" onClick={() => deleteItem(item._id)} className="text-slate-400 hover:bg-rose-500/10 hover:text-rose-400">
+                      <Trash2 />
+                    </IconAction>
                   </div>
                 </div>
               ))
@@ -224,24 +182,27 @@ export const ListEditorDrawer: React.FC<ListEditorDrawerProps> = ({
           </div>
         </div>
 
-        {/* Bottom Actions */}
-        <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
+        <SheetFooter className="flex-row items-center justify-between border-t border-slate-800 p-6 pt-4">
           {items.length > 0 ? (
-            <button
-              onClick={handleClearAll}
-              className="text-xs text-rose-400/80 hover:text-rose-400 font-mono transition-colors"
-            >
-              Clear all items
-            </button>
+            <ConfirmAction
+              trigger={
+                <Button variant="ghost" size="sm" className="font-mono text-xs text-rose-400/80 hover:text-rose-400">
+                  Clear all items
+                </Button>
+              }
+              title="Remove all items?"
+              description="Every item in this list is deleted. Selection history is kept."
+              confirmLabel="Remove All"
+              onConfirm={() => clearItems(listId)}
+            />
           ) : (
             <span />
           )}
-
-          <CyberButton variant="secondary" size="sm" onClick={onClose}>
+          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
             Done
-          </CyberButton>
-        </div>
-      </div>
-    </div>
+          </Button>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
-};
+}

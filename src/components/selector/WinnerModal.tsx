@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { X, RotateCw, Trophy, SkipForward, Flame } from "lucide-react";
-import { CyberButton } from "../ui/CyberButton";
+import { Button } from "@/components/ui/button";
+import { Kbd } from "@/components/ui/kbd";
 import type { ListItem, AnimationTheme } from "@/lib/types";
 import { triggerWinnerConfetti } from "@/lib/utils";
 import { sound } from "@/lib/sound";
@@ -68,13 +69,15 @@ export const WinnerModal: React.FC<WinnerModalProps> = ({
           <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-48 h-48 bg-amber-500/25 rounded-full blur-3xl pointer-events-none" />
 
           {/* Close Button */}
-          <button
+          <Button
+            variant="ghost"
+            size="icon-lg"
             onClick={onClose}
-            className="absolute top-5 right-5 p-2 text-amber-300/70 hover:text-white rounded-full hover:bg-amber-950/60 transition-colors"
-            title="Close (Esc)"
+            aria-label="Close (Esc)"
+            className="absolute top-5 right-5 rounded-full text-amber-300/70 hover:text-white rounded-full hover:bg-amber-950/60 transition-colors"
           >
-            <X className="w-5 h-5" />
-          </button>
+            <X className="size-5" />
+          </Button>
 
           {/* Header Pill */}
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/15 border border-amber-400/50 text-amber-300 text-xs font-mono tracking-widest uppercase shadow-[0_0_15px_rgba(245,158,11,0.25)]">
@@ -102,43 +105,40 @@ export const WinnerModal: React.FC<WinnerModalProps> = ({
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-4 border-t border-amber-500/30">
-            <CyberButton
-              variant="secondary"
-              size="md"
+            <Button
+              variant="outline"
               onClick={onClose}
-              className="flex-1 w-full h-11 text-xs font-mono uppercase tracking-wider border-amber-500/40 text-amber-200 hover:bg-amber-950/40"
+              className="h-11 w-full flex-1 rounded-xl text-xs font-mono uppercase tracking-wider border-amber-500/40 text-amber-200 hover:bg-amber-950/40"
             >
               Close
-            </CyberButton>
+            </Button>
 
             {onSkip && (
-              <CyberButton
-                variant="secondary"
-                size="md"
+              <Button
+                variant="outline"
                 onClick={onSkip}
-                className="flex-1 w-full h-11 text-xs font-mono uppercase tracking-wider text-amber-300 border-amber-500/40 hover:border-amber-400 hover:text-amber-200 hover:bg-amber-500/10 gap-1.5"
+                className="h-11 w-full flex-1 rounded-xl text-xs font-mono uppercase tracking-wider text-amber-300 border-amber-500/40 hover:border-amber-400 hover:text-amber-200 hover:bg-amber-500/10 gap-1.5"
                 title="Skip this item and roll again"
               >
                 <SkipForward className="w-4 h-4 text-amber-400" />
                 <span>Skip</span>
-              </CyberButton>
+              </Button>
             )}
 
             {!isRoundComplete && (
-              <CyberButton
+              <Button
                 variant="cyber"
-                size="md"
                 onClick={onPickAgain}
-                className="flex-1 w-full h-11 text-xs font-mono uppercase tracking-wider gap-1.5 whitespace-nowrap bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-bold shadow-[0_0_20px_rgba(245,158,11,0.5)] border-amber-400"
+                className="h-11 w-full flex-1 rounded-xl text-xs font-mono uppercase tracking-wider gap-1.5 whitespace-nowrap bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-bold shadow-[0_0_20px_rgba(245,158,11,0.5)] border-amber-400"
               >
                 <RotateCw className="w-4 h-4" />
                 <span>Pick Another</span>
-              </CyberButton>
+              </Button>
             )}
           </div>
 
           <div className="text-[11px] font-mono text-amber-400/50">
-            Press <kbd className="px-1.5 py-0.5 rounded bg-black/60 border border-amber-500/30 text-amber-300">Esc</kbd> to close {onSkip && <>&bull; <kbd className="px-1.5 py-0.5 rounded bg-black/60 border border-amber-500/30 text-amber-300">S</kbd> to skip</>}
+            Press <Kbd>Esc</Kbd> to close {onSkip && <>&bull; <Kbd>S</Kbd> to skip</>}
           </div>
         </div>
       ) : isCrimson ? (
@@ -148,13 +148,15 @@ export const WinnerModal: React.FC<WinnerModalProps> = ({
           <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-48 h-48 bg-rose-500/25 rounded-full blur-3xl pointer-events-none" />
 
           {/* Close Button */}
-          <button
+          <Button
+            variant="ghost"
+            size="icon-lg"
             onClick={onClose}
-            className="absolute top-5 right-5 p-2 text-rose-300/70 hover:text-white rounded-full hover:bg-rose-950/60 transition-colors"
-            title="Close (Esc)"
+            aria-label="Close (Esc)"
+            className="absolute top-5 right-5 rounded-full text-rose-300/70 hover:text-white rounded-full hover:bg-rose-950/60 transition-colors"
           >
-            <X className="w-5 h-5" />
-          </button>
+            <X className="size-5" />
+          </Button>
 
           {/* Header Pill */}
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-rose-500/20 border border-rose-400/50 text-rose-300 text-xs font-mono tracking-widest uppercase shadow-[0_0_15px_rgba(244,63,94,0.3)]">
@@ -185,43 +187,40 @@ export const WinnerModal: React.FC<WinnerModalProps> = ({
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-4 border-t border-rose-500/30">
-            <CyberButton
-              variant="secondary"
-              size="md"
+            <Button
+              variant="outline"
               onClick={onClose}
-              className="flex-1 w-full h-11 text-xs font-mono uppercase tracking-wider border-rose-500/40 text-rose-200 hover:bg-rose-950/40"
+              className="h-11 w-full flex-1 rounded-xl text-xs font-mono uppercase tracking-wider border-rose-500/40 text-rose-200 hover:bg-rose-950/40"
             >
               Close
-            </CyberButton>
+            </Button>
 
             {onSkip && (
-              <CyberButton
-                variant="secondary"
-                size="md"
+              <Button
+                variant="outline"
                 onClick={onSkip}
-                className="flex-1 w-full h-11 text-xs font-mono uppercase tracking-wider text-rose-300 border-rose-500/40 hover:border-rose-400 hover:text-rose-200 hover:bg-rose-500/10 gap-1.5"
+                className="h-11 w-full flex-1 rounded-xl text-xs font-mono uppercase tracking-wider text-rose-300 border-rose-500/40 hover:border-rose-400 hover:text-rose-200 hover:bg-rose-500/10 gap-1.5"
                 title="Skip this item and roll again"
               >
                 <SkipForward className="w-4 h-4 text-rose-400" />
                 <span>Skip</span>
-              </CyberButton>
+              </Button>
             )}
 
             {!isRoundComplete && (
-              <CyberButton
+              <Button
                 variant="cyber"
-                size="md"
                 onClick={onPickAgain}
-                className="flex-1 w-full h-11 text-xs font-mono uppercase tracking-wider gap-1.5 whitespace-nowrap bg-gradient-to-r from-rose-600 via-red-600 to-amber-600 text-white font-bold shadow-[0_0_20px_rgba(244,63,94,0.5)] border-rose-400"
+                className="h-11 w-full flex-1 rounded-xl text-xs font-mono uppercase tracking-wider gap-1.5 whitespace-nowrap bg-gradient-to-r from-rose-600 via-red-600 to-amber-600 text-white font-bold shadow-[0_0_20px_rgba(244,63,94,0.5)] border-rose-400"
               >
                 <RotateCw className="w-4 h-4" />
                 <span>Pick Another</span>
-              </CyberButton>
+              </Button>
             )}
           </div>
 
           <div className="text-[11px] font-mono text-rose-400/50">
-            Press <kbd className="px-1.5 py-0.5 rounded bg-black/60 border border-rose-500/30 text-rose-300">Esc</kbd> to close {onSkip && <>&bull; <kbd className="px-1.5 py-0.5 rounded bg-black/60 border border-rose-500/30 text-rose-300">S</kbd> to skip</>}
+            Press <Kbd>Esc</Kbd> to close {onSkip && <>&bull; <Kbd>S</Kbd> to skip</>}
           </div>
         </div>
       ) : (
@@ -231,13 +230,15 @@ export const WinnerModal: React.FC<WinnerModalProps> = ({
           <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-48 h-48 bg-cyan-500/20 rounded-full blur-3xl pointer-events-none" />
 
           {/* Close Button */}
-          <button
+          <Button
+            variant="ghost"
+            size="icon-lg"
             onClick={onClose}
-            className="absolute top-5 right-5 p-2 text-slate-400 hover:text-white rounded-full hover:bg-slate-800/80 transition-colors"
-            title="Close (Esc)"
+            aria-label="Close (Esc)"
+            className="absolute top-5 right-5 rounded-full text-slate-400 hover:text-white rounded-full hover:bg-slate-800/80 transition-colors"
           >
-            <X className="w-5 h-5" />
-          </button>
+            <X className="size-5" />
+          </Button>
 
           {/* Header Pill */}
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-400/40 text-cyan-300 text-xs font-mono tracking-widest uppercase">
@@ -264,43 +265,40 @@ export const WinnerModal: React.FC<WinnerModalProps> = ({
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-4 border-t border-slate-800/80">
-            <CyberButton
-              variant="secondary"
-              size="md"
+            <Button
+              variant="outline"
               onClick={onClose}
-              className="flex-1 w-full h-11 text-xs font-mono uppercase tracking-wider"
+              className="h-11 w-full flex-1 rounded-xl text-xs font-mono uppercase tracking-wider"
             >
               Close
-            </CyberButton>
+            </Button>
 
             {onSkip && (
-              <CyberButton
-                variant="secondary"
-                size="md"
+              <Button
+                variant="outline"
                 onClick={onSkip}
-                className="flex-1 w-full h-11 text-xs font-mono uppercase tracking-wider text-amber-300 border-amber-500/40 hover:border-amber-400 hover:text-amber-200 hover:bg-amber-500/10 gap-1.5"
+                className="h-11 w-full flex-1 rounded-xl text-xs font-mono uppercase tracking-wider text-amber-300 border-amber-500/40 hover:border-amber-400 hover:text-amber-200 hover:bg-amber-500/10 gap-1.5"
                 title="Skip this item and roll again"
               >
                 <SkipForward className="w-4 h-4 text-amber-400" />
                 <span>Skip</span>
-              </CyberButton>
+              </Button>
             )}
 
             {!isRoundComplete && (
-              <CyberButton
+              <Button
                 variant="cyber"
-                size="md"
                 onClick={onPickAgain}
-                className="flex-1 w-full h-11 text-xs font-mono uppercase tracking-wider gap-1.5 whitespace-nowrap"
+                className="h-11 w-full flex-1 rounded-xl text-xs font-mono uppercase tracking-wider gap-1.5 whitespace-nowrap"
               >
                 <RotateCw className="w-4 h-4" />
                 <span>Pick Another</span>
-              </CyberButton>
+              </Button>
             )}
           </div>
 
           <div className="text-[11px] font-mono text-slate-500">
-            Press <kbd className="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-400">Esc</kbd> to close {onSkip && <>&bull; <kbd className="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-400">S</kbd> to skip</>}
+            Press <Kbd>Esc</Kbd> to close {onSkip && <>&bull; <Kbd>S</Kbd> to skip</>}
           </div>
         </div>
       )}

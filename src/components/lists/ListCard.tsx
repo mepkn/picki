@@ -1,51 +1,36 @@
-import React from "react";
 import { Link } from "react-router";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import type { ListDoc } from "@/lib/types";
 
-interface ListCardProps {
-  list: ListDoc;
-}
-
-export const ListCard: React.FC<ListCardProps> = ({ list }) => {
+export function ListCard({ list }: { list: ListDoc }) {
   const itemCount = list.itemCount ?? 0;
   const selectedCount = list.selectedThisRound ?? 0;
-  const progressPercent =
-    itemCount > 0 ? Math.min(100, Math.round((selectedCount / itemCount) * 100)) : 0;
+  const progressPercent = itemCount > 0 ? Math.min(100, Math.round((selectedCount / itemCount) * 100)) : 0;
 
   return (
-    <Link
-      to={`/lists/${list.slug}`}
-      className="cyber-glass rounded-2xl p-5 sm:p-6 border border-slate-800/80 hover:border-cyan-500/50 hover:shadow-[0_8px_30px_rgba(0,240,255,0.12)] transition-all duration-300 flex flex-col justify-between group block cursor-pointer"
-    >
-      <div className="space-y-4">
-        {/* Title & Item Count */}
-        <div>
-          <h3 className="text-xl font-bold text-white group-hover:text-cyan-300 transition-colors tracking-tight line-clamp-1">
+    <Link to={`/lists/${list.slug}`} className="group block rounded-2xl focus-visible:outline-2 focus-visible:outline-ring">
+      <Card className="cyber-glass h-full rounded-2xl border-slate-800/80 py-5 transition-all duration-300 group-hover:border-cyan-500/50 group-hover:shadow-[0_8px_30px_rgba(0,240,255,0.12)] sm:py-6">
+        <CardHeader className="px-5 sm:px-6">
+          <CardTitle className="line-clamp-1 text-xl font-bold tracking-tight text-white transition-colors group-hover:text-cyan-300">
             {list.name}
-          </h3>
-          <div className="text-xs text-slate-400 mt-1 font-mono">
+          </CardTitle>
+          <CardDescription className="font-mono text-xs">
             {itemCount} {itemCount === 1 ? "item" : "items"}
-          </div>
-        </div>
-
-        {/* Round Progress */}
+          </CardDescription>
+        </CardHeader>
         {list.selectionMode !== "allow_repetition" && (
-          <div className="space-y-1.5 pt-1">
-            <div className="flex items-center justify-between text-xs font-mono">
-              <span className="text-slate-400">Round {list.currentRound || 1} Progress</span>
-              <span className="text-cyan-300 font-semibold">
+          <CardContent className="space-y-1.5 px-5 sm:px-6">
+            <div className="flex items-center justify-between font-mono text-xs">
+              <span className="text-muted-foreground">Round {list.currentRound || 1} Progress</span>
+              <span className="font-semibold text-cyan-300">
                 {selectedCount} / {itemCount}
               </span>
             </div>
-            <div className="w-full h-1.5 rounded-full bg-slate-900 overflow-hidden border border-slate-800">
-              <div
-                className="h-full bg-gradient-to-r from-cyan-500 to-purple-500 transition-all duration-300"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
-          </div>
+            <Progress value={progressPercent} aria-label={`Round progress ${progressPercent}%`} className="picki-progress" />
+          </CardContent>
         )}
-      </div>
+      </Card>
     </Link>
   );
-};
+}
