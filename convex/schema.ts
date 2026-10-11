@@ -5,8 +5,7 @@ import { v } from "convex/values";
 export default defineSchema({
   ...authTables,
   lists: defineTable({
-    // Optional only until existing lists are claimed by convex/migrations.ts.
-    userId: v.optional(v.id("users")),
+    userId: v.id("users"),
     name: v.string(),
     slug: v.string(),
     selectionMode: v.union(
