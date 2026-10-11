@@ -2,7 +2,7 @@ import React from "react";
 import { Link, useNavigate } from "react-router";
 import { Authenticated } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
-import { LogOut, Sparkles } from "lucide-react";
+import { Dice5, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -39,7 +39,7 @@ export const Navbar: React.FC = () => {
         {/* Centered Logo */}
         <Link to="/" className="flex items-center gap-2.5 group">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-purple-600 flex items-center justify-center shadow-[0_0_15px_rgba(0,240,255,0.4)] group-hover:shadow-[0_0_25px_rgba(0,240,255,0.7)] transition-all duration-300">
-            <Sparkles className="w-5 h-5 text-black" />
+            <Dice5 className="w-5 h-5 text-black" />
           </div>
           <span className="text-xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-white via-cyan-100 to-cyan-400 group-hover:to-cyan-300">
             PICKI
