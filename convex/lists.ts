@@ -1,19 +1,6 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
-import type { Id } from "./_generated/dataModel";
 import { currentUserId, getOwnedList, requireUserId } from "./lib/access";
-
-// Distinct items of the list picked in the round; picks of deleted items or
-// history-only rows (no itemId) don't count, matching selectRandomItem.
-function countPickedItems(
-  items: { _id: Id<"items"> }[],
-  selections: { itemId?: Id<"items"> }[]
-): number {
-  const itemIds = new Set(items.map((i) => i._id));
-  return new Set(
-    selections.map((s) => s.itemId).filter((id) => id && itemIds.has(id))
-  ).size;
-}
 
 function generateSlug(name: string): string {
   const sanitized = name
@@ -136,7 +123,7 @@ export const getAllLists = query({
         return {
           ...list,
           itemCount: items.length,
-          selectedThisRound: countPickedItems(items, roundSelections),
+          selectedThisRound: roundSelections.length,
         };
       })
     );

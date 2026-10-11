@@ -134,15 +134,11 @@ export function ListPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [autoRestartNotice, setAutoRestartNotice] = useState<string | null>(null);
 
-  // Calculate current round progress: only picks of items still in the list
-  // count, matching the server's eligibility check.
-  const itemIds = new Set(items.map((i) => i._id));
-  const selectedCountThisRound = new Set(
-    selections
-      .filter((s) => s.round === (list?.currentRound || 1))
-      .map((s) => s.itemId)
-      .filter((id): id is string => !!id && itemIds.has(id))
-  ).size;
+  // Calculate current round progress
+  const currentRoundSelections = selections.filter(
+    (s) => s.round === (list?.currentRound || 1)
+  );
+  const selectedCountThisRound = currentRoundSelections.length;
   const isRoundComplete =
     list?.selectionMode === "no_repetition" &&
     items.length > 0 &&
