@@ -13,9 +13,11 @@ interface HistoryDrawerProps {
   selections: SelectionRecord[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Hides voiding and clearing, for visitors who don't own the list. */
+  readOnly?: boolean;
 }
 
-export function HistoryDrawer({ listId, listName, selections, open, onOpenChange }: HistoryDrawerProps) {
+export function HistoryDrawer({ listId, listName, selections, open, onOpenChange, readOnly = false }: HistoryDrawerProps) {
   const { clearSelections, deleteSelection } = usePicki();
 
   // Group selections by round, newest round first.
@@ -66,7 +68,7 @@ export function HistoryDrawer({ listId, listName, selections, open, onOpenChange
                           <Clock className="size-3 text-slate-600" />
                           {formatDate(sel.selectedAt)}
                         </span>
-                        <Tooltip>
+                        {!readOnly && <Tooltip>
                           <TooltipTrigger
                             render={
                               <Button
@@ -81,7 +83,7 @@ export function HistoryDrawer({ listId, listName, selections, open, onOpenChange
                             <Trash2 />
                           </TooltipTrigger>
                           <TooltipContent>Void / skip this pick</TooltipContent>
-                        </Tooltip>
+                        </Tooltip>}
                       </div>
                     </div>
                   ))}
@@ -92,7 +94,7 @@ export function HistoryDrawer({ listId, listName, selections, open, onOpenChange
         </div>
 
         <SheetFooter className="flex-row items-center justify-between border-t border-slate-800 p-6 pt-4">
-          {selections.length > 0 ? (
+          {selections.length > 0 && !readOnly ? (
             <ConfirmAction
               trigger={
                 <Button variant="ghost" size="sm" className="font-mono text-xs text-rose-400/80 hover:text-rose-400">

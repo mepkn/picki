@@ -1,15 +1,13 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { getOwnedList } from "./lib/access";
 
 export const selectRandomItem = mutation({
   args: {
     listId: v.id("lists"),
   },
   handler: async (ctx, args) => {
-    const list = await ctx.db.get(args.listId);
-    if (!list) {
-      throw new Error("List not found");
-    }
+    const list = await getOwnedList(ctx, args.listId);
 
     const items = await ctx.db
       .query("items")
@@ -119,6 +117,7 @@ export const getSelections = query({
 export const clearSelections = mutation({
   args: { listId: v.id("lists") },
   handler: async (ctx, args) => {
+    await getOwnedList(ctx, args.listId);
     const selections = await ctx.db
       .query("selections")
       .withIndex("by_listId", (q) => q.eq("listId", args.listId))
@@ -140,6 +139,7 @@ export const deleteSelection = mutation({
   handler: async (ctx, args) => {
     const selection = await ctx.db.get(args.selectionId);
     if (!selection) return null;
+    await getOwnedList(ctx, selection.listId);
 
     await ctx.db.delete(args.selectionId);
     await ctx.db.patch(selection.listId, { updatedAt: Date.now() });

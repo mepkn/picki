@@ -1,8 +1,12 @@
 import { defineSchema, defineTable } from "convex/server";
+import { authTables } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 
 export default defineSchema({
+  ...authTables,
   lists: defineTable({
+    // Optional only until existing lists are claimed by convex/migrations.ts.
+    userId: v.optional(v.id("users")),
     name: v.string(),
     slug: v.string(),
     selectionMode: v.union(
@@ -27,7 +31,7 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_slug", ["slug"])
-    .index("by_updatedAt", ["updatedAt"]),
+    .index("by_user_updatedAt", ["userId", "updatedAt"]),
 
   items: defineTable({
     listId: v.id("lists"),

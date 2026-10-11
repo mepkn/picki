@@ -13,14 +13,17 @@
     "deploy:dry": "DRY_RUN=1 scripts/deploy.sh",
     "convex:dev": "convex dev",
     "convex:deploy": "convex deploy",
-    "typecheck": "tsc -b",
-    "test": "vitest run"
+    "typecheck": "tsc -b && tsc -p convex --noEmit",
+    "test": "vitest run",
+    "setup:auth": "node scripts/setup-auth-keys.ts --apply"
   },
   "engines": {
     "node": ">=22.18"
   },
   "dependencies": {
+    "@auth/core": "^0.41.3",
     "@base-ui/react": "^1.9.0",
+    "@convex-dev/auth": "^0.0.96",
     "@fontsource-variable/geist": "^5.3.0",
     "@fontsource-variable/geist-mono": "^5.3.0",
     "canvas-confetti": "^1.9.4",

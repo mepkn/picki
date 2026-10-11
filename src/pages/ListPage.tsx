@@ -28,8 +28,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Kbd } from "@/components/ui/kbd";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
+import type { Id } from "../../convex/_generated/dataModel";
+import { Spinner } from "@/components/ui/spinner";
 import { usePicki } from "@/lib/picki-context";
-import type { ListItem, SelectionResult } from "@/lib/types";
+import { toListDoc } from "@/lib/list-doc";
+import type { ListItem, SelectionRecord, SelectionResult } from "@/lib/types";
 import { copyToClipboard } from "@/lib/utils";
 
 export function ListPage() {
@@ -38,9 +43,6 @@ export function ListPage() {
   const slug = params.slug ?? "";
 
   const {
-    getListBySlug,
-    getItems,
-    getSelections,
     selectRandomItem,
     startNewRound,
     deleteSelection,
@@ -48,9 +50,27 @@ export function ListPage() {
     updateList,
   } = usePicki();
 
-  const list = getListBySlug(slug);
-  const items = list ? getItems(list._id) : [];
-  const selections = list ? getSelections(list._id) : [];
+  // Live for everyone with the link; only the owner gets canEdit.
+  const rawList = useQuery(api.lists.getListBySlug, { slug });
+  const list = rawList ? toListDoc(rawList) : rawList;
+  const canEdit = rawList?.canEdit ?? false;
+  const listId = rawList?._id as Id<"lists"> | undefined;
+  const rawItems = useQuery(api.items.getItems, listId ? { listId } : "skip");
+  const rawSelections = useQuery(api.selections.getSelections, listId ? { listId } : "skip");
+  const items: ListItem[] = React.useMemo(
+    () => (rawItems ?? []).map((i) => ({ ...i, _id: i._id as string, listId: i.listId as string })),
+    [rawItems]
+  );
+  const selections: SelectionRecord[] = React.useMemo(
+    () =>
+      (rawSelections ?? []).map((s) => ({
+        ...s,
+        _id: s._id as string,
+        listId: s.listId as string,
+        itemId: s.itemId as string | undefined,
+      })),
+    [rawSelections]
+  );
 
   // Random aesthetic chosen when list has animationTheme 'random'
   const [randomTheme] = useState<"gold_stadium" | "crimson_arena" | "cyber_hud">(() => {
@@ -134,7 +154,7 @@ export function ListPage() {
 
   // Authoritative selection trigger
   const handleSelect = async () => {
-    if (!list) return;
+    if (!list || !canEdit) return;
     if (isSelecting) return; // Prevent double-clicks / rapid fires
     if (items.length === 0) {
       setShowEditor(true);
@@ -220,6 +240,7 @@ export function ListPage() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (
         e.code === "Space" &&
+        canEdit &&
         !showEditor &&
         !showSettings &&
         !showHistory &&
@@ -237,7 +258,7 @@ export function ListPage() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [showEditor, showSettings, showHistory, showWinnerModal, isSelecting, isRoundComplete, items.length]);
+  }, [canEdit, showEditor, showSettings, showHistory, showWinnerModal, isSelecting, isRoundComplete, items.length]);
 
   const selectedItem: ListItem | null = authoritativeResult
     ? items.find((i) => i._id === authoritativeResult.selectedItem._id) ?? {
@@ -255,6 +276,17 @@ export function ListPage() {
       : effectiveTheme === "crimson_arena"
       ? CrimsonArenaSelector
       : HolographicSelector;
+
+  if (list === undefined) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-1 grid place-items-center">
+          <Spinner className="size-6 text-cyan-400" />
+        </main>
+      </div>
+    );
+  }
 
   // Not Found State
   if (!list) {
@@ -344,7 +376,7 @@ export function ListPage() {
                       <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-normal border-b-2 border-transparent pb-0.5 truncate max-w-[220px] xs:max-w-[300px] sm:max-w-sm md:max-w-md">
                         {list.name}
                       </h1>
-                      <Tooltip>
+                      {canEdit && <Tooltip>
                         <TooltipTrigger
                           render={
                             <Button
@@ -362,7 +394,7 @@ export function ListPage() {
                           <Edit3 />
                         </TooltipTrigger>
                         <TooltipContent>Rename list</TooltipContent>
-                      </Tooltip>
+                      </Tooltip>}
                     </>
                   )}
                   <ModeBadge mode={list.selectionMode} className="shrink-0" />
@@ -398,14 +430,15 @@ export function ListPage() {
                   </>
                 )}
               </Button>
-              <Button variant="outline" onClick={() => setShowEditor(true)} className="h-9 shrink-0 rounded-xl font-mono text-xs text-slate-300 hover:text-white">
+              {canEdit && <Button variant="outline" onClick={() => setShowEditor(true)} className="h-9 shrink-0 rounded-xl font-mono text-xs text-slate-300 hover:text-white">
                 <ListPlus className="text-cyan-400" />
                 Edit Items ({items.length})
-              </Button>
+              </Button>}
               <Button variant="outline" onClick={() => setShowHistory(true)} className="h-9 shrink-0 rounded-xl font-mono text-xs text-slate-300 hover:text-white">
                 <History className="text-purple-400" />
                 History ({selections.length})
               </Button>
+              {canEdit && <>
               <Tooltip>
                 <TooltipTrigger
                   render={
@@ -439,6 +472,7 @@ export function ListPage() {
                 confirmLabel="Delete List"
                 onConfirm={handleDeleteList}
               />
+              </>}
             </div>
           </div>
         </div>
@@ -470,7 +504,11 @@ export function ListPage() {
 
           {/* Action Zone */}
           <div className="mt-6 flex flex-col items-center gap-3 w-full max-w-sm">
-            {isRoundComplete ? (
+            {!canEdit ? (
+              <div className="text-xs font-mono text-slate-500 text-center">
+                View only: picks made by the list owner show up here live.
+              </div>
+            ) : isRoundComplete ? (
               <div className="space-y-3 w-full text-center">
                 <div className="p-3.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 font-mono text-xs font-bold uppercase tracking-wider">
                   ★ Round {list.currentRound} Complete! All items selected.
@@ -507,9 +545,11 @@ export function ListPage() {
               </Button>
             )}
 
-            <div className="text-[11px] font-mono text-slate-500 text-center">
-              Press <Kbd>Space</Kbd> or click to select
-            </div>
+            {canEdit && (
+              <div className="text-[11px] font-mono text-slate-500 text-center">
+                Press <Kbd>Space</Kbd> or click to select
+              </div>
+            )}
           </div>
         </div>
       </main>
@@ -531,14 +571,18 @@ export function ListPage() {
         />
       )}
 
-      <ListEditorDrawer listId={list._id} items={items} open={showEditor} onOpenChange={setShowEditor} />
-
-      <SettingsModal list={list} open={showSettings} onOpenChange={setShowSettings} />
+      {canEdit && (
+        <>
+          <ListEditorDrawer listId={list._id} items={items} open={showEditor} onOpenChange={setShowEditor} />
+          <SettingsModal list={list} open={showSettings} onOpenChange={setShowSettings} />
+        </>
+      )}
 
       <HistoryDrawer
         listId={list._id}
         listName={list.name}
         selections={selections}
+        readOnly={!canEdit}
         open={showHistory}
         onOpenChange={setShowHistory}
       />

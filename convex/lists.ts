@@ -1,5 +1,6 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { currentUserId, getOwnedList, requireUserId } from "./lib/access";
 
 function generateSlug(name: string): string {
   const sanitized = name
@@ -35,6 +36,7 @@ export const createList = mutation({
     ),
   },
   handler: async (ctx, args) => {
+    const userId = await requireUserId(ctx);
     const trimmedName = args.name.trim() || "Untitled List";
     let slug = generateSlug(trimmedName);
 
@@ -49,6 +51,7 @@ export const createList = mutation({
 
     const now = Date.now();
     const listId = await ctx.db.insert("lists", {
+      userId,
       name: trimmedName,
       slug,
       selectionMode: args.selectionMode ?? "no_repetition",
@@ -78,29 +81,28 @@ export const createList = mutation({
   },
 });
 
+// Public: anyone with the link can view a list; only its owner can change it.
 export const getListBySlug = query({
   args: { slug: v.string() },
   handler: async (ctx, args) => {
-    return await ctx.db
+    const list = await ctx.db
       .query("lists")
       .withIndex("by_slug", (q) => q.eq("slug", args.slug))
       .first();
-  },
-});
-
-export const getListById = query({
-  args: { listId: v.id("lists") },
-  handler: async (ctx, args) => {
-    return await ctx.db.get(args.listId);
+    if (!list) return null;
+    const userId = await currentUserId(ctx);
+    return { ...list, canEdit: userId !== null && list.userId === userId };
   },
 });
 
 export const getAllLists = query({
   args: {},
   handler: async (ctx) => {
+    const userId = await currentUserId(ctx);
+    if (userId === null) return [];
     const lists = await ctx.db
       .query("lists")
-      .withIndex("by_updatedAt")
+      .withIndex("by_user_updatedAt", (q) => q.eq("userId", userId))
       .order("desc")
       .collect();
 
@@ -156,8 +158,7 @@ export const updateList = mutation({
   },
   handler: async (ctx, args) => {
     const { listId, ...fields } = args;
-    const list = await ctx.db.get(listId);
-    if (!list) throw new Error("List not found");
+    const list = await getOwnedList(ctx, listId);
 
     const patch: Record<string, unknown> = { updatedAt: Date.now() };
     if (fields.name !== undefined) patch.name = fields.name.trim() || list.name;
@@ -174,6 +175,8 @@ export const updateList = mutation({
 export const deleteList = mutation({
   args: { listId: v.id("lists") },
   handler: async (ctx, args) => {
+    await getOwnedList(ctx, args.listId);
+
     // Delete items
     const items = await ctx.db
       .query("items")
@@ -201,8 +204,7 @@ export const deleteList = mutation({
 export const duplicateList = mutation({
   args: { listId: v.id("lists") },
   handler: async (ctx, args) => {
-    const list = await ctx.db.get(args.listId);
-    if (!list) throw new Error("List not found");
+    const list = await getOwnedList(ctx, args.listId);
 
     const items = await ctx.db
       .query("items")
@@ -214,6 +216,7 @@ export const duplicateList = mutation({
     const newSlug = generateSlug(newName);
 
     const newListId = await ctx.db.insert("lists", {
+      userId: list.userId,
       name: newName,
       slug: newSlug,
       selectionMode: list.selectionMode,
@@ -240,8 +243,7 @@ export const duplicateList = mutation({
 export const startNewRound = mutation({
   args: { listId: v.id("lists") },
   handler: async (ctx, args) => {
-    const list = await ctx.db.get(args.listId);
-    if (!list) throw new Error("List not found");
+    const list = await getOwnedList(ctx, args.listId);
 
     const nextRound = (list.currentRound || 1) + 1;
     await ctx.db.patch(args.listId, {

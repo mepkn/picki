@@ -1,7 +1,29 @@
 import { BrowserRouter, Route, Routes } from "react-router";
+import { Authenticated, AuthLoading, Unauthenticated } from "convex/react";
+import { Spinner } from "@/components/ui/spinner";
 import { PickiProvider } from "@/lib/store";
 import { HomePage } from "@/pages/HomePage";
 import { ListPage } from "@/pages/ListPage";
+import { SignInPage } from "@/pages/SignInPage";
+
+/** Your lists need a sign-in; a list link (/lists/:slug) is viewable by anyone. */
+function Home() {
+  return (
+    <>
+      <AuthLoading>
+        <div className="flex-1 grid place-items-center min-h-screen">
+          <Spinner className="size-6 text-cyan-400" />
+        </div>
+      </AuthLoading>
+      <Unauthenticated>
+        <SignInPage />
+      </Unauthenticated>
+      <Authenticated>
+        <HomePage />
+      </Authenticated>
+    </>
+  );
+}
 
 export default function App() {
   return (
@@ -15,7 +37,7 @@ export default function App() {
       <PickiProvider>
         <div className="relative z-10 flex-1 flex flex-col">
           <Routes>
-            <Route path="/" element={<HomePage />} />
+            <Route path="/" element={<Home />} />
             <Route path="/lists/:slug" element={<ListPage />} />
             <Route path="*" element={<ListPage />} />
           </Routes>

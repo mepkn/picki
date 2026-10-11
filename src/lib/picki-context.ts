@@ -1,11 +1,8 @@
 import { createContext, useContext } from "react";
-import type { ListDoc, ListItem, SelectionRecord, SelectionResult, SelectionMode, AnimationTheme } from "./types";
+import type { ListDoc, SelectionResult, SelectionMode, AnimationTheme } from "./types";
 
 export interface PickiContextType {
   lists: ListDoc[];
-  getListBySlug: (slug: string) => ListDoc | undefined;
-  getItems: (listId: string) => ListItem[];
-  getSelections: (listId: string) => SelectionRecord[];
   createList: (params: {
     name: string;
     items?: string[];

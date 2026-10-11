@@ -1,5 +1,6 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { getOwnedList } from "./lib/access";
 
 export const getItems = query({
   args: { listId: v.id("lists") },
@@ -18,6 +19,7 @@ export const addItem = mutation({
     value: v.string(),
   },
   handler: async (ctx, args) => {
+    await getOwnedList(ctx, args.listId);
     const trimmed = args.value.trim();
     if (!trimmed) throw new Error("Item value cannot be empty");
 
@@ -40,6 +42,7 @@ export const addItemsBulk = mutation({
     values: v.array(v.string()),
   },
   handler: async (ctx, args) => {
+    await getOwnedList(ctx, args.listId);
     const now = Date.now();
     const insertedIds = [];
 
@@ -75,6 +78,7 @@ export const updateItem = mutation({
 
     const item = await ctx.db.get(args.itemId);
     if (!item) throw new Error("Item not found");
+    await getOwnedList(ctx, item.listId);
 
     const now = Date.now();
     await ctx.db.patch(args.itemId, {
@@ -94,6 +98,7 @@ export const deleteItem = mutation({
   handler: async (ctx, args) => {
     const item = await ctx.db.get(args.itemId);
     if (!item) throw new Error("Item not found");
+    await getOwnedList(ctx, item.listId);
 
     await ctx.db.delete(args.itemId);
     await ctx.db.patch(item.listId, { updatedAt: Date.now() });
@@ -106,6 +111,7 @@ export const clearItems = mutation({
     listId: v.id("lists"),
   },
   handler: async (ctx, args) => {
+    await getOwnedList(ctx, args.listId);
     const items = await ctx.db
       .query("items")
       .withIndex("by_listId", (q) => q.eq("listId", args.listId))
