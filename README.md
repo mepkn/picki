@@ -53,7 +53,7 @@ npm run dev                  # web app at http://localhost:5173
 
 `scripts/deploy.sh` deploys `backend/convex/` to the production deployment, builds the site with
 that deployment's URL, and syncs `web/dist/` to the VPS. Settings live in each part's
-`.env.prod.local` (git-ignored, see `.env.example`): `backend/.env.prod.local` has
+`.env.prod.local` (git-ignored, see the `.env.example` next to each): `backend/.env.prod.local` has
 `CONVEX_DEPLOY_KEY` (Convex dashboard → Production → Settings → Deploy Keys), and
 `web/.env.prod.local` has `DEPLOY_HOST` / `DEPLOY_PORT` / `DEPLOY_DIR`. Because routes like `/lists/:slug` are client-side,
 Caddy needs an SPA fallback:
