@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { useQuery, useConvex } from "convex/react";
-import { api } from "../../convex/_generated/api";
-import type { Id } from "../../convex/_generated/dataModel";
+import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
 import type { ListDoc, SelectionResult, SelectionMode, AnimationTheme } from "./types";
 import { PickiContext, type PickiContextType } from "./picki-context";
 import { toListDoc } from "./list-doc";

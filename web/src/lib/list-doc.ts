@@ -1,4 +1,4 @@
-import type { Doc } from "../../convex/_generated/dataModel";
+import type { Doc } from "@convex/_generated/dataModel";
 import type { AnimationTheme, ListDoc, SelectionMode } from "./types";
 
 /** Maps a Convex list document to the shape the UI uses, filling defaults. */

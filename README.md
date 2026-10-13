@@ -22,31 +22,32 @@ Requires Node 22.18+ (`.nvmrc` pins 22).
 
 ```bash
 npm install
+npm run web:install         # the web app's own dependencies (web/)
 npx convex deployment select local   # first time only: dev runs on a local backend
 npm run convex:dev           # starts the local backend and pushes convex/
 npm run setup:auth           # first time only: auth signing keys
 npx convex env set SITE_URL http://localhost:5173
 npx convex env set ALLOWED_EMAILS you@example.com
-npm run dev
+npm run dev                  # web app
 ```
 
 ## Scripts
 
 | Command | What it does |
 |---|---|
+| `npm run web:install` | Install the web app's dependencies (`web/node_modules`) |
 | `npm run dev` | Dev server at http://localhost:5173 |
-| `npm run build` | Typecheck and production build into `dist/` |
+| `npm run build` | Typecheck and production build into `web/dist/` |
 | `npm run convex:dev` / `convex:deploy` | Push backend functions to Convex |
-| `npm run lint` | ESLint |
-| `npm test` | Unit tests (Vitest): selection/round rules |
-| `npm run check` | Typecheck, lint and tests |
+| `npm run lint` | ESLint for `convex/` and `scripts/` |
+| `npm run check` | Typecheck and lint `convex/`, then the web app's typecheck, lint and tests (Vitest: selection/round rules) |
 | `npm run deploy` | Checks, deploys Convex to production, builds and uploads to the VPS |
 | `npm run deploy:dry` | Same, but only previews: nothing is deployed or uploaded |
 
 ## Deployment
 
 `scripts/deploy.sh` deploys `convex/` to the production deployment, builds the site with
-that deployment's URL, and syncs `dist/` to the VPS. Settings live in `.env.prod.local`
+that deployment's URL, and syncs `web/dist/` to the VPS. Settings live in `.env.prod.local`
 (git-ignored, see `.env.example`): `CONVEX_DEPLOY_KEY` (Convex dashboard → Production →
 Settings → Deploy Keys) and `DEPLOY_HOST` / `DEPLOY_PORT` / `DEPLOY_DIR`. Because routes like `/lists/:slug` are client-side,
 Caddy needs an SPA fallback:
@@ -65,5 +66,7 @@ try_files {path} /index.html
 
 - `convex/` holds the schema and functions (lists, items, selections). The random pick is
   done server-side in `selections:selectRandomItem`.
-- `src/lib/store.tsx` wraps Convex in a `PickiProvider`; components use `usePicki()`.
-- `src/pages/` has the two routes; `src/components/selector/` the three animated themes.
+- `web/` is the Vite app, with its own `package.json`; it imports the backend as `@convex/...`
+  and reads the root `.env.local`.
+- `web/src/lib/store.tsx` wraps Convex in a `PickiProvider`; components use `usePicki()`.
+- `web/src/pages/` has the two routes; `web/src/components/selector/` the three animated themes.
