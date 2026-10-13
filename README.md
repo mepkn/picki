@@ -21,32 +21,37 @@ React 19 · TypeScript · Vite · Tailwind CSS v4 · shadcn/ui (Base UI) · Reac
 Requires Node 22.18+ (`.nvmrc` pins 22).
 
 ```bash
+cd backend
 npm install
-npm run web:install         # the web app's own dependencies (web/)
 npx convex deployment select local   # first time only: dev runs on a local backend
-npm run convex:dev           # starts the local backend and pushes convex/
+npm run dev                  # starts the local backend and pushes convex/ (keep it running)
 npm run setup:auth           # first time only: auth signing keys
 npx convex env set SITE_URL http://localhost:5173
 npx convex env set ALLOWED_EMAILS you@example.com
-npm run dev                  # web app
+
+cd ../web
+npm install
+npm run dev                  # web app at http://localhost:5173
 ```
 
 ## Scripts
 
 | Command | What it does |
 |---|---|
-| `npm run web:install` | Install the web app's dependencies (`web/node_modules`) |
-| `npm run dev` | Dev server at http://localhost:5173 |
-| `npm run build` | Typecheck and production build into `web/dist/` |
-| `npm run convex:dev` / `convex:deploy` | Push backend functions to Convex |
-| `npm run lint` | ESLint for `convex/` and `scripts/` |
-| `npm run check` | Typecheck and lint `convex/`, then the web app's typecheck, lint and tests (Vitest: selection/round rules) |
-| `npm run deploy` | Checks, deploys Convex to production, builds and uploads to the VPS |
-| `npm run deploy:dry` | Same, but only previews: nothing is deployed or uploaded |
+| `backend/`: `npm run dev` | Local Convex backend; pushes `convex/` on every change |
+| `backend/`: `npm run deploy` | Push the functions to production (`scripts/deploy.sh` does this for you) |
+| `backend/`: `npm run setup:auth` | Auth signing keys (`node scripts/setup-auth-keys.ts --apply --prod` for production) |
+| `backend/`: `npm run check` | Typecheck and lint `convex/` and `scripts/` |
+| `web/`: `npm run dev` | Dev server at http://localhost:5173 |
+| `web/`: `npm run build` | Typecheck and production build into `web/dist/` |
+| `web/`: `npm run check` | Typecheck, lint and tests (Vitest: selection/round rules) |
+| `scripts/check.sh` | Both checks; run before committing |
+| `scripts/deploy.sh` | Checks, deploys Convex to production, builds and uploads to the VPS |
+| `DRY_RUN=1 scripts/deploy.sh` | Same, but only previews: nothing is deployed or uploaded |
 
 ## Deployment
 
-`scripts/deploy.sh` deploys `convex/` to the production deployment, builds the site with
+`scripts/deploy.sh` deploys `backend/convex/` to the production deployment, builds the site with
 that deployment's URL, and syncs `web/dist/` to the VPS. Settings live in `.env.prod.local`
 (git-ignored, see `.env.example`): `CONVEX_DEPLOY_KEY` (Convex dashboard → Production →
 Settings → Deploy Keys) and `DEPLOY_HOST` / `DEPLOY_PORT` / `DEPLOY_DIR`. Because routes like `/lists/:slug` are client-side,
@@ -59,14 +64,14 @@ try_files {path} /index.html
 ## How it works
 
 - Auth is Convex Auth (Password). `ALLOWED_EMAILS` is checked at sign-up/sign-in and again on every
-  request (`convex/lib/access.ts`), so removing an email cuts off existing sessions. Every mutation
+  request (`backend/convex/lib/access.ts`), so removing an email cuts off existing sessions. Every mutation
   checks that the caller owns the list.
-- Production env vars: `JWT_PRIVATE_KEY`/`JWKS` (`node scripts/setup-auth-keys.ts --apply --prod`),
+- Production env vars: `JWT_PRIVATE_KEY`/`JWKS` (`node scripts/setup-auth-keys.ts --apply --prod` in `backend/`),
   `SITE_URL=https://picki.pknspace.com` and `ALLOWED_EMAILS`.
 
-- `convex/` holds the schema and functions (lists, items, selections). The random pick is
+- `backend/` is the Convex backend with its own `package.json`; `backend/convex/` holds the schema and functions (lists, items, selections). The random pick is
   done server-side in `selections:selectRandomItem`.
 - `web/` is the Vite app, with its own `package.json`; it imports the backend as `@convex/...`
-  and reads the root `.env.local`.
+  and reads `backend/.env.local`.
 - `web/src/lib/store.tsx` wraps Convex in a `PickiProvider`; components use `usePicki()`.
 - `web/src/pages/` has the two routes; `web/src/components/selector/` the three animated themes.
